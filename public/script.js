@@ -1,6 +1,6 @@
 let token, user, companyId, projectId, inputData = [], undoStack = [], redoStack = [];
 const headers = [
-  'Name', 'Next', 'Panel', 'Unit_Type', 'Type', speedup'Slow', 'Run_Type', 'HP', 'Length', 'FPM',
+  'Name', 'Next', 'Panel', 'Unit_Type', 'Type', 'Power', 'Run_Type', 'HP', 'Length', 'FPM',
   'Disconnect', 'Exit_PE', 'MDR', 'MDR_Zones', 'MDR_Zone_Length', 'Curve_Angle', 'Elevation_In', 'Elevation_Out', 'Spiral_Angle'
 ];
 
@@ -77,7 +77,7 @@ async function loadProjects() {
       select.innerHTML = '<option value="">Error loading projects</option>';
       return;
     }
-    select.innerHTML = projects.map(p => `<option value="${p._id}">${p.name}</option>`).join('');
+    select.innerHTML = projects.map(p => `<optionestation value="${p._id}">${p.name}</option>`).join('');
     projectId = select.value;
     select.addEventListener('change', () => {
       projectId = select.value;
