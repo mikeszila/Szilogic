@@ -70,14 +70,25 @@ async function loadProjects() {
   }
   try {
     const res = await fetch(`/api/project/${companyId}`, { headers: { Authorization: `Bearer ${token}` } });
-    if (!res.ok) throw new Error('Failed to load projects');
-    const projects = await res.json();
+    const text = await res.text();
+    console.log('Raw projects response:', text);
+    if (!res.ok) {
+      console.error('Fetch projects failed with status:', res.status, 'response:', text);
+      throw new Error('Failed to load projects');
+    }
+    const projects = JSON.parse(text);
+    console.log('Parsed projects:', projects);
     const select = document.getElementById('project-select');
     if (!Array.isArray(projects)) {
+      console.error('Projects response is not an array:', projects);
       select.innerHTML = '<option value="">Error loading projects</option>';
       return;
     }
-    select.innerHTML = projects.map(p => `<optionestation value="${p._id}">${p.name}</option>`).join('');
+    if (projects.length === 0) {
+      select.innerHTML = '<option value="">No projects available</option>';
+      return;
+    }
+    select.innerHTML = projects.map(p => `<option value="${p._id}">${p.name}</option>`).join('');
     projectId = select.value;
     select.addEventListener('change', () => {
       projectId = select.value;
@@ -88,7 +99,7 @@ async function loadProjects() {
     setupSSE();
   } catch (err) {
     console.error('loadProjects error:', err);
-    throw err;
+    document.getElementById('project-select').innerHTML = '<option value="">Error loading projects</option>';
   }
 }
 
