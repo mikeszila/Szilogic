@@ -227,7 +227,7 @@ function renderTable(config) {
   const tbody = document.createElement('tbody');
   inputData.forEach((row, i) => {
     const tr = document.createElement('tr');
-    tr.dataset.rowIndex = i; // Store row index for context menu
+    tr.dataset.rowIndex = i;
     headers.forEach((header, j) => {
       const td = document.createElement('td');
       td.contentEditable = true;
@@ -241,17 +241,29 @@ function renderTable(config) {
   table.appendChild(tbody);
   validateAndEnable(config);
 
-  // Context menu setup
+  // Native context menu setup
   table.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
     const row = e.target.closest('tr');
     if (!row) return;
     const rowIndex = parseInt(row.dataset.rowIndex);
-    const menu = document.getElementById('context-menu');
-    menu.style.top = `${e.pageY}px`;
-    menu.style.left = `${e.pageX}px`;
-    menu.classList.remove('hidden');
-    menu.dataset.rowIndex = rowIndex;
+    e.preventDefault();
+
+    // Custom events to trigger actions
+    const insertEvent = new CustomEvent('insertRow', { detail: { rowIndex, config } });
+    const deleteEvent = new CustomEvent('deleteRow', { detail: { rowIndex, config } });
+
+    // Simulate native menu items (actual native menu extension requires browser API not available in standard JS)
+    // For now, we'll trigger these programmatically; native menu requires browser-specific hacks
+    setTimeout(() => {
+      const action = prompt('Right-click action: "Insert Row" or "Delete Row" (type "insert" or "delete")');
+      if (action === 'insert') {
+        document.dispatchEvent(insertEvent);
+      } else if (action === 'delete' && inputData.length > 1) {
+        document.dispatchEvent(deleteEvent);
+      } else if (action === 'delete') {
+        alert('Cannot delete the last row');
+      }
+    }, 0);
   });
 }
 
@@ -390,6 +402,8 @@ function undo() {
   if (undoStack.length) {
     redoStack.push([...inputData]);
     inputData = undoStack.pop();
+    const config = defaultInputDataConfig; // Simplified for now, fetch config if needed
+    renderTable(config);
   }
 }
 
@@ -397,6 +411,8 @@ function redo() {
   if (redoStack.length) {
     undoStack.push([...inputData]);
     inputData = redoStack.pop();
+    const config = defaultInputDataConfig; // Simplified for now, fetch config if needed
+    renderTable(config);
   }
 }
 
@@ -404,7 +420,7 @@ function newRow(config) {
   const newRowData = Array(headers.length).fill('');
   inputData.push(newRowData);
   renderTable(config);
-  saveAndBroadcast(null, null, null); // Null values since it's a structural change
+  saveAndBroadcast(null, null, null);
 }
 
 function insertRow(rowIndex, config) {
@@ -692,27 +708,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     document.getElementById('cancel-project').addEventListener('click', closeProjectModal);
     document.getElementById('configure-columns-btn').addEventListener('click', showConfigModal);
+    document.getElementById('configure-columns-below').addEventListener('click', showConfigModal);
     document.getElementById('add-column').addEventListener('click', addConfigColumn);
     document.getElementById('save-config').addEventListener('click', saveConfig);
     document.getElementById('cancel-config').addEventListener('click', closeConfigModal);
 
     // Context menu handlers
-    document.getElementById('insert-row').addEventListener('click', async () => {
-      const menu = document.getElementById('context-menu');
-      const rowIndex = parseInt(menu.dataset.rowIndex);
-      const config = await loadInputData();
+    document.addEventListener('insertRow', async (e) => {
+      const { rowIndex, config } = e.detail;
       insertRow(rowIndex, config);
-      menu.classList.add('hidden');
     });
-    document.getElementById('delete-row').addEventListener('click', async () => {
-      const menu = document.getElementById('context-menu');
-      const rowIndex = parseInt(menu.dataset.rowIndex);
-      const config = await loadInputData();
+    document.addEventListener('deleteRow', async (e) => {
+      const { rowIndex, config } = e.detail;
       deleteRow(rowIndex, config);
-      menu.classList.add('hidden');
-    });
-    document.addEventListener('click', () => {
-      document.getElementById('context-menu').classList.add('hidden');
     });
 
     updateDateTime();

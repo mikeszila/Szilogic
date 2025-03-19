@@ -24,18 +24,73 @@ body { font-family: 'Nanum Gothic', sans-serif; margin: 0; }
   font-size: 12px; 
 }
 #toolbar { padding: 10px; }
-table { border-collapse: collapse; width: 100%; }
-th, td { border: 1px solid #ccc; padding: 5px; }
-td.invalid { background: red; }
-td.disabled { background: grey; pointer-events: none; }
-td.locked { background: lightgreen; }
-#progress { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 50px; height: 50px; background: url('spinner.gif'); }
+table { 
+  border-collapse: collapse; 
+  width: 100%; 
+  margin-bottom: 10px; 
+}
+th, td { 
+  border: 1px solid #ccc; 
+  padding: 8px; 
+  text-align: left;
+}
+th { 
+  background: #e0e0e0; 
+  font-weight: bold; 
+}
+tr:nth-child(even) { 
+  background: #f9f9f9; 
+}
+tr:nth-child(odd) { 
+  background: #ffffff; 
+}
+td.invalid { background: #ffcccc; }
+td.disabled { 
+  background: #d0d0d0; 
+  pointer-events: none; 
+}
+td.locked { background: #ccffcc; }
+#table-footer { 
+  padding: 10px; 
+  text-align: left; 
+}
+#progress { 
+  position: fixed; 
+  top: 50%; 
+  left: 50%; 
+  transform: translate(-50%, -50%); 
+  width: 50px; 
+  height: 50px; 
+  background: url('spinner.gif'); 
+}
 .hidden { display: none !important; }
 
 /* Modal Styles */
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; }
-.modal-content { background: white; padding: 20px; border-radius: 5px; width: 800px; text-align: center; max-height: 80vh; overflow-y: auto; }
-.modal-content input, .modal-content select { width: 90%; padding: 5px; margin: 5px 0; }
+.modal { 
+  position: fixed; 
+  top: 0; 
+  left: 0; 
+  width: 100%; 
+  height: 100%; 
+  background: rgba(0, 0, 0, 0.5); 
+  display: flex; 
+  justify-content: center; 
+  align-items: center; 
+}
+.modal-content { 
+  background: white; 
+  padding: 20px; 
+  border-radius: 5px; 
+  width: 800px; 
+  text-align: center; 
+  max-height: 80vh; 
+  overflow-y: auto; 
+}
+.modal-content input, .modal-content select { 
+  width: 90%; 
+  padding: 5px; 
+  margin: 5px 0; 
+}
 .modal-content button { 
   margin: 5px; 
   padding: 5px 10px; 
@@ -45,10 +100,27 @@ td.locked { background: lightgreen; }
   cursor: pointer; 
   font-size: 12px; 
 }
-#config-form .config-row { margin: 10px 0; border: 1px solid #ccc; padding: 10px; }
-#config-form label { display: inline-block; width: 100px; }
-#login-form, #register-form { max-width: 400px; margin: 50px auto; padding: 20px; border: 1px solid #ccc; }
-input { display: block; width: 100%; margin: 10px 0; padding: 5px; }
+#config-form .config-row { 
+  margin: 10px 0; 
+  border: 1px solid #ccc; 
+  padding: 10px; 
+}
+#config-form label { 
+  display: inline-block; 
+  width: 100px; 
+}
+#login-form, #register-form { 
+  max-width: 400px; 
+  margin: 50px auto; 
+  padding: 20px; 
+  border: 1px solid #ccc; 
+}
+input { 
+  display: block; 
+  width: 100%; 
+  margin: 10px 0; 
+  padding: 5px; 
+}
 button { 
   background: #D3D3D3; 
   color: #000000; 
@@ -56,20 +128,4 @@ button {
   border: none; 
   cursor: pointer; 
   font-size: 12px; 
-}
-
-/* Context Menu Styles */
-#context-menu { 
-  position: absolute; 
-  background: white; 
-  border: 1px solid #ccc; 
-  box-shadow: 2px 2px 5px rgba(0,0,0,0.2); 
-  z-index: 1000; 
-}
-.menu-item { 
-  padding: 5px 10px; 
-  cursor: pointer; 
-}
-.menu-item:hover { 
-  background: #f0f0f0; 
 }
