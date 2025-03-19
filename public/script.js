@@ -1,6 +1,6 @@
 let token, user, companyId, projectId, inputData = [], undoStack = [], redoStack = [];
 const headers = [
-  'Name', 'Next', 'Panel', 'Unit_Type', 'Type', 'Power', 'Run_Type', 'HP', 'Length', 'FPM',
+  'Name', 'Next', 'Panel', 'Unit_Type', 'Type', speedup'Slow', 'Run_Type', 'HP', 'Length', 'FPM',
   'Disconnect', 'Exit_PE', 'MDR', 'MDR_Zones', 'MDR_Zone_Length', 'Curve_Angle', 'Elevation_In', 'Elevation_Out', 'Spiral_Angle'
 ];
 
