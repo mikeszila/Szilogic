@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Szilogic</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="top-bar">
+    <span id="logo">Honest Controls, LLC<br><small>Systems Integration Solutions</small></span>
+    <span id="datetime"></span>
+    <select id="company-select"></select>
+    <select id="project-select"></select>
+    <button id="create-company-btn">Create Company</button>
+    <button id="create-project-btn">Create Project</button>
+    <button id="configure-columns-btn">Configure Columns</button>
+    <span id="user">User: <span id="username"></span></span>
+    <button id="logout">Logout</button>
+  </div>
+  <div id="toolbar">
+    <button id="upload">Upload CSV</button>
+    <button id="export">Export CSV</button>
+    <button id="sort-flow">Sort by Product Flow</button>
+    <button id="undo">Undo</button>
+    <button id="redo">Redo</button>
+    <button id="new-row">New Row</button>
+    <button id="save">Save</button>
+  </div>
+  <table id="input-data"></table>
+  <div id="progress" class="hidden"></div>
+
+  <!-- Context Menu -->
+  <div id="context-menu" class="hidden">
+    <div id="insert-row" class="menu-item">Insert Row</div>
+    <div id="delete-row" class="menu-item">Delete Row</div>
+  </div>
+
+  <!-- Company Creation Modal -->
+  <div id="create-company-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Create New Company</h2>
+      <input type="text" id="company-name" placeholder="Company Name" required>
+      <button id="submit-company">Create</button>
+      <button id="cancel-company">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Project Creation Modal -->
+  <div id="create-project-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Create New Project</h2>
+      <input type="text" id="project-name" placeholder="Project Name" required>
+      <button id="submit-project">Create</button>
+      <button id="cancel-project">Cancel</button>
+    </div>
+  </div>
+
+  <!-- Configure Columns Modal -->
+  <div id="configure-columns-modal" class="modal hidden">
+    <div class="modal-content">
+      <h2>Configure Columns</h2>
+      <div id="config-form"></div>
+      <button id="add-column">Add Column</button>
+      <button id="save-config">Save</button>
+      <button id="cancel-config">Cancel</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

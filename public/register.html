@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Szilogic - Register</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="register-form">
+    <h2>Register for Szilogic</h2>
+    <input type="text" id="firstName" placeholder="First Name" required>
+    <input type="text" id="lastName" placeholder="Last Name" required>
+    <input type="email" id="email" placeholder="Email" required>
+    <input type="text" id="username" placeholder="Username" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <button id="register-btn">Register</button>
+    <p><a href="/login.html">Login</a></p>
+  </div>
+  <script>
+    document.getElementById('register-btn').addEventListener('click', async () => {
+      const firstName = document.getElementById('firstName').value;
+      const lastName = document.getElementById('lastName').value;
+      const email = document.getElementById('email').value;
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName, lastName, email, username, password })
+      });
+      const data = await res.json();
+      if (res.status === 201) {
+        alert('Registration successful! Check your email to verify.');
+      } else {
+        alert(data.message || 'Registration failed');
+      }
+    });
+  </script>
+</body>
+</html>
