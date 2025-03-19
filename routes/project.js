@@ -6,16 +6,13 @@ const Company = require('../models/Company');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 
-// Store SSE clients
 const clients = new Map();
 
-// Apply JWT auth to all routes except SSE (we'll handle it manually)
 router.use((req, res, next) => {
-  if (req.path.startsWith('/events/')) return next(); // Skip Passport for SSE
+  if (req.path.startsWith('/events/')) return next();
   passport.authenticate('jwt', { session: false })(req, res, next);
 });
 
-// Create Project
 router.post('/', async (req, res) => {
   const { name, companyId } = req.body;
   const company = await Company.findById(companyId);
@@ -52,18 +49,14 @@ router.post('/', async (req, res) => {
   res.status(201).json(project);
 });
 
-// Get Projects by Company ID
 router.get('/:companyId', async (req, res) => {
   console.log(`Fetching projects for companyId: ${req.params.companyId}`);
   const { companyId } = req.params;
-  if (!companyId || !mongoose.Types.ObjectId.isValid(companyId)) {
-    return res.status(400).json({ message: 'Invalid companyId' });
-  }
+  if (!mongoose.Types.ObjectId.isValid(companyId)) return res.status(400).json({ message: 'Invalid companyId' });
   const projects = await Project.find({ company: companyId, status: { $ne: 'Archived' } });
   res.json(projects);
 });
 
-// Update Project Input Data and Config
 router.put('/:id/inputData', async (req, res) => {
   console.log(`Updating project ${req.params.id} with data:`, req.body);
   const project = await Project.findById(req.params.id);
@@ -81,41 +74,25 @@ router.put('/:id/inputData', async (req, res) => {
   res.json(project);
 });
 
-// Get Project by ID
 router.get('/project/:id', async (req, res) => {
   console.log(`Fetching project by ID: ${req.params.id}`);
   const { id } = req.params;
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return res.status(400).json({ message: 'Invalid project ID' });
-  }
+  if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ message: 'Invalid project ID' });
   const project = await Project.findById(id);
-  if (!project) {
-    return res.status(404).json({ message: 'Project not found' });
-  }
+  if (!project) return res.status(404).json({ message: 'Project not found' });
   res.json(project);
 });
 
-// SSE Endpoint for Real-Time Updates
 router.get('/events/:projectId', async (req, res) => {
   const projectId = req.params.projectId;
   console.log(`SSE connection requested for projectId: ${projectId}`);
-  if (!mongoose.Types.ObjectId.isValid(projectId)) {
-    console.log(`Invalid projectId: ${projectId}`);
-    return res.status(400).json({ message: 'Invalid project ID' });
-  }
+  if (!mongoose.Types.ObjectId.isValid(projectId)) return res.status(400).json({ message: 'Invalid project ID' });
 
-  // Manual JWT verification from query parameter
   const token = req.query.token;
-  if (!token) {
-    console.log(`No token provided for SSE connection to ${projectId}`);
-    return res.status(401).json({ message: 'No token provided' });
-  }
-
+  if (!token) return res.status(401).json({ message: 'No token provided' });
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log(`Token verified for user: ${decoded.id} on project ${projectId}`);
+    jwt.verify(token, process.env.JWT_SECRET);
   } catch (err) {
-    console.log(`Invalid token for SSE connection to ${projectId}:`, err.message);
     return res.status(401).json({ message: 'Invalid token' });
   }
 
@@ -127,12 +104,10 @@ router.get('/events/:projectId', async (req, res) => {
   const client = { id: Date.now(), res };
   if (!clients.has(projectId)) clients.set(projectId, []);
   clients.get(projectId).push(client);
-  console.log(`Client ${client.id} added to project ${projectId}, total clients: ${clients.get(projectId).length}`);
 
   req.on('close', () => {
     const projectClients = clients.get(projectId);
     clients.set(projectId, projectClients.filter(c => c.id !== client.id));
-    console.log(`Client ${client.id} disconnected from project ${projectId}, remaining clients: ${clients.get(projectId).length}`);
   });
 });
 

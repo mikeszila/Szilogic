@@ -4,7 +4,6 @@ const headers = [
   'Disconnect', 'Exit_PE', 'MDR', 'MDR_Zones', 'MDR_Zone_Length', 'Curve_Angle', 'Elevation_In', 'Elevation_Out', 'Spiral_Angle'
 ];
 
-// Default config if missing from server response
 const defaultInputDataConfig = [
   { name: 'Name', rules: { type: 'string', startsWith: 'letter' }, enabledIf: { always: true } },
   { name: 'Next', rules: { type: 'string', optional: true }, enabledIf: { always: true } },
@@ -15,7 +14,7 @@ const defaultInputDataConfig = [
   { name: 'Run_Type', rules: { type: 'enum', values: ['Transport', 'Gravity', 'Singulate Slug', 'Singulate'] }, enabledIf: { field: 'Unit_Type', value: 'Conveyor' } },
   { name: 'HP', rules: { type: 'number', format: 'X|X.X|X.XX', min: 0 }, enabledIf: { field: 'Power', values: ['Starter', 'VFD'] } },
   { name: 'Length', rules: { type: 'number', min: 1, max: 9999999 }, enabledIf: { field: 'Type', values: ['Belt', 'Roller Gate', 'Roller', 'Accumulation'] } },
-  { name: 'FPM', rules: { type: 'number', min: 1, max: 99999 }, enabledIf: { field: 'Power', not: 'Gravity' } },
+  { name: 'FPM', rules: { type: 'number', min: 1, max: 9999999 }, enabledIf: { field: 'Power', not: 'Gravity' } },
   { name: 'Disconnect', rules: { type: 'boolean' }, enabledIf: { field: 'Power', values: ['Starter', 'VFD'] } },
   { name: 'Exit_PE', rules: { type: 'boolean' }, enabledIf: { field: 'Unit_Type', value: 'Conveyor' } },
   { name: 'MDR', rules: { type: 'enum', values: ['IBE', 'HB510'] }, enabledIf: { field: 'Power', value: 'MDR' } },
@@ -27,29 +26,11 @@ const defaultInputDataConfig = [
   { name: 'Spiral_Angle', rules: { type: 'number', min: -360, max: 360 }, enabledIf: { field: 'Type', value: 'Spiral' } }
 ];
 
-// Function definitions
 async function fetchUserData() {
-  console.log('Starting fetchUserData with token:', token);
   try {
-    const res = await fetch('/api/auth/me', { 
-      headers: { Authorization: `Bearer ${token}` },
-      method: 'GET'
-    });
-    console.log('Fetch completed, status:', res.status, 'ok:', res.ok);
-    const text = await res.text();
-    console.log('Raw /me response:', text);
-    console.log('Response headers:', Object.fromEntries(res.headers.entries()));
-    if (!res.ok) {
-      console.error('Fetch user data failed with status:', res.status);
-      throw new Error('Invalid token');
-    }
-    try {
-      user = JSON.parse(text);
-      console.log('Parsed user data:', user);
-    } catch (parseErr) {
-      console.error('JSON parse error:', parseErr, 'Raw text:', text);
-      throw parseErr;
-    }
+    const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+    if (!res.ok) throw new Error('Invalid token');
+    user = await res.json();
     document.getElementById('username').textContent = user.username;
     await loadCompanies();
   } catch (err) {
@@ -59,21 +40,14 @@ async function fetchUserData() {
 }
 
 async function loadCompanies() {
-  console.log('Loading companies...');
   try {
     const res = await fetch('/api/company', { headers: { Authorization: `Bearer ${token}` } });
-    const text = await res.text();
-    console.log('Raw companies response:', text);
-    if (!res.ok) {
-      console.error('Fetch companies failed with status:', res.status);
-      throw new Error('Failed to load companies');
-    }
-    const companies = JSON.parse(text);
+    if (!res.ok) throw new Error('Failed to load companies');
+    const companies = await res.json();
     const select = document.getElementById('company-select');
     if (!Array.isArray(companies) || companies.length === 0) {
       select.innerHTML = '<option value="">No companies found</option>';
       companyId = null;
-      console.log('No companies available');
       return;
     }
     select.innerHTML = companies.map(c => `<option value="${c._id}">${c.name}</option>`).join('');
@@ -90,25 +64,16 @@ async function loadCompanies() {
 }
 
 async function loadProjects() {
-  console.log('Loading projects for companyId:', companyId);
   if (!companyId) {
-    console.log('No company selected, skipping loadProjects');
-    const select = document.getElementById('project-select');
-    select.innerHTML = '<option value="">No projects (select a company)</option>';
+    document.getElementById('project-select').innerHTML = '<option value="">No projects (select a company)</option>';
     return;
   }
   try {
     const res = await fetch(`/api/project/${companyId}`, { headers: { Authorization: `Bearer ${token}` } });
-    const text = await res.text();
-    console.log('Raw projects response:', text);
-    if (!res.ok) {
-      console.error('Fetch projects failed with status:', res.status);
-      throw new Error('Failed to load projects');
-    }
-    const projects = JSON.parse(text);
+    if (!res.ok) throw new Error('Failed to load projects');
+    const projects = await res.json();
     const select = document.getElementById('project-select');
     if (!Array.isArray(projects)) {
-      console.error('Projects response is not an array:', projects);
       select.innerHTML = '<option value="">Error loading projects</option>';
       return;
     }
@@ -128,22 +93,12 @@ async function loadProjects() {
 }
 
 async function loadInputData() {
-  console.log('Loading input data for projectId:', projectId);
-  if (!projectId) {
-    console.log('No project selected, skipping loadInputData');
-    return;
-  }
+  if (!projectId) return;
   try {
     const res = await fetch(`/api/project/project/${projectId}`, { headers: { Authorization: `Bearer ${token}` } });
-    const text = await res.text();
-    console.log('Raw project input data response:', text);
-    if (!res.ok) {
-      console.error('Fetch project input data failed with status:', res.status);
-      throw new Error('Failed to load project input data');
-    }
-    const project = JSON.parse(text);
+    if (!res.ok) throw new Error('Failed to load project input data');
+    const project = await res.json();
     inputData = Array.isArray(project.inputData) ? project.inputData : [[]];
-    console.log('Loaded inputData:', inputData);
     const config = Array.isArray(project.inputDataConfig) ? project.inputDataConfig : defaultInputDataConfig;
     headers.length = 0;
     headers.push(...config.map(c => c.name));
@@ -157,25 +112,14 @@ async function loadInputData() {
 
 async function createCompany() {
   const name = document.getElementById('company-name').value.trim();
-  if (!name) {
-    alert('Company name is required');
-    return;
-  }
+  if (!name) return alert('Company name is required');
   try {
     const res = await fetch('/api/company', {
       method: 'POST',
-      headers: { 
-        'Authorization': `Bearer ${token}`, 
-        'Content-Type': 'application/json' 
-      },
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ name })
     });
-    const text = await res.text();
-    console.log('Create company response:', text);
-    if (!res.ok) {
-      const data = JSON.parse(text);
-      throw new Error(data.message || 'Failed to create company');
-    }
+    if (!res.ok) throw new Error((await res.json()).message || 'Failed to create company');
     closeCompanyModal();
     await loadCompanies();
   } catch (err) {
@@ -186,29 +130,15 @@ async function createCompany() {
 
 async function createProject() {
   const name = document.getElementById('project-name').value.trim();
-  if (!name) {
-    alert('Project name is required');
-    return;
-  }
-  if (!companyId) {
-    alert('Please select a company first');
-    return;
-  }
+  if (!name) return alert('Project name is required');
+  if (!companyId) return alert('Please select a company first');
   try {
     const res = await fetch('/api/project', {
       method: 'POST',
-      headers: { 
-        'Authorization': `Bearer ${token}`, 
-        'Content-Type': 'application/json' 
-      },
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, companyId })
     });
-    const text = await res.text();
-    console.log('Create project response:', text);
-    if (!res.ok) {
-      const data = JSON.parse(text);
-      throw new Error(data.message || 'Failed to create project');
-    }
+    if (!res.ok) throw new Error((await res.json()).message || 'Failed to create project');
     closeProjectModal();
     await loadProjects();
   } catch (err) {
@@ -241,29 +171,16 @@ function renderTable(config) {
   table.appendChild(tbody);
   validateAndEnable(config);
 
-  // Native context menu setup
   table.addEventListener('contextmenu', (e) => {
     const row = e.target.closest('tr');
     if (!row) return;
     const rowIndex = parseInt(row.dataset.rowIndex);
+    const menu = document.getElementById('context-menu');
+    menu.style.top = `${e.pageY}px`;
+    menu.style.left = `${e.pageX}px`;
+    menu.classList.remove('hidden');
+    menu.dataset.rowIndex = rowIndex;
     e.preventDefault();
-
-    // Custom events to trigger actions
-    const insertEvent = new CustomEvent('insertRow', { detail: { rowIndex, config } });
-    const deleteEvent = new CustomEvent('deleteRow', { detail: { rowIndex, config } });
-
-    // Simulate native menu items (actual native menu extension requires browser API not available in standard JS)
-    // For now, we'll trigger these programmatically; native menu requires browser-specific hacks
-    setTimeout(() => {
-      const action = prompt('Right-click action: "Insert Row" or "Delete Row" (type "insert" or "delete")');
-      if (action === 'insert') {
-        document.dispatchEvent(insertEvent);
-      } else if (action === 'delete' && inputData.length > 1) {
-        document.dispatchEvent(deleteEvent);
-      } else if (action === 'delete') {
-        alert('Cannot delete the last row');
-      }
-    }, 0);
   });
 }
 
@@ -281,12 +198,7 @@ async function saveAndBroadcast(row, col, value) {
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ inputData })
     });
-    const text = await res.text();
-    console.log('Save and broadcast response:', text);
-    if (!res.ok) {
-      const data = JSON.parse(text);
-      throw new Error(data.message || 'Failed to save data');
-    }
+    if (!res.ok) throw new Error((await res.json()).message || 'Failed to save data');
   } catch (err) {
     console.error('saveAndBroadcast error:', err);
     alert(err.message);
@@ -332,11 +244,7 @@ function validateCell(value, rules) {
 }
 
 async function saveData() {
-  console.log('Saving data for projectId:', projectId, 'inputData:', inputData);
-  if (!projectId) {
-    alert('Please select a project to save');
-    return;
-  }
+  if (!projectId) return alert('Please select a project to save');
   try {
     document.getElementById('progress').classList.remove('hidden');
     const res = await fetch(`/api/project/${projectId}/inputData`, {
@@ -344,12 +252,7 @@ async function saveData() {
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ inputData })
     });
-    const text = await res.text();
-    console.log('Save data response:', text);
-    if (!res.ok) {
-      const data = JSON.parse(text);
-      throw new Error(data.message || 'Failed to save data');
-    }
+    if (!res.ok) throw new Error((await res.json()).message || 'Failed to save data');
     document.getElementById('progress').classList.add('hidden');
   } catch (err) {
     console.error('saveData error:', err);
@@ -360,13 +263,11 @@ async function saveData() {
 
 function setupSSE() {
   if (!projectId) return;
-  console.log(`Setting up SSE for projectId: ${projectId}`);
   const source = new EventSource(`/api/project/events/${projectId}?token=${token}`);
   source.onmessage = (event) => {
     const data = JSON.parse(event.data);
     if (data.projectId === projectId && JSON.stringify(data.inputData) !== JSON.stringify(inputData)) {
       inputData = data.inputData;
-      console.log('Received SSE update:', inputData);
       const config = Array.isArray(data.inputDataConfig) ? data.inputDataConfig : defaultInputDataConfig;
       headers.length = 0;
       headers.push(...config.map(c => c.name));
@@ -374,12 +275,8 @@ function setupSSE() {
     }
   };
   source.onerror = () => {
-    console.error(`SSE connection error for projectId: ${projectId}`);
     source.close();
     setTimeout(setupSSE, 2000);
-  };
-  source.onopen = () => {
-    console.log(`SSE connection opened for projectId: ${projectId}`);
   };
 }
 
@@ -402,8 +299,7 @@ function undo() {
   if (undoStack.length) {
     redoStack.push([...inputData]);
     inputData = undoStack.pop();
-    const config = defaultInputDataConfig; // Simplified for now, fetch config if needed
-    renderTable(config);
+    renderTable(defaultInputDataConfig);
   }
 }
 
@@ -411,21 +307,18 @@ function redo() {
   if (redoStack.length) {
     undoStack.push([...inputData]);
     inputData = redoStack.pop();
-    const config = defaultInputDataConfig; // Simplified for now, fetch config if needed
-    renderTable(config);
+    renderTable(defaultInputDataConfig);
   }
 }
 
 function newRow(config) {
-  const newRowData = Array(headers.length).fill('');
-  inputData.push(newRowData);
+  inputData.push(Array(headers.length).fill(''));
   renderTable(config);
   saveAndBroadcast(null, null, null);
 }
 
 function insertRow(rowIndex, config) {
-  const newRowData = Array(headers.length).fill('');
-  inputData.splice(rowIndex, 0, newRowData);
+  inputData.splice(rowIndex, 0, Array(headers.length).fill(''));
   renderTable(config);
   saveAndBroadcast(null, null, null);
 }
@@ -441,8 +334,7 @@ function deleteRow(rowIndex, config) {
 }
 
 function updateDateTime() {
-  const now = new Date();
-  document.getElementById('datetime').textContent = now.toLocaleString('en-US', {
+  document.getElementById('datetime').textContent = new Date().toLocaleString('en-US', {
     weekday: 'long', day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: 'numeric', hour12: true
   });
   setTimeout(updateDateTime, 1000);
@@ -467,10 +359,7 @@ function closeProjectModal() {
 }
 
 function showConfigModal() {
-  if (!projectId) {
-    alert('Please select a project to configure columns');
-    return;
-  }
+  if (!projectId) return alert('Please select a project to configure columns');
   document.getElementById('configure-columns-modal').classList.remove('hidden');
   loadConfigForm();
 }
@@ -608,10 +497,7 @@ function addConfigColumn() {
 }
 
 async function saveConfig() {
-  if (!projectId) {
-    alert('Please select a project to save configuration');
-    return;
-  }
+  if (!projectId) return alert('Please select a project to save configuration');
   const form = document.getElementById('config-form');
   const newConfig = Array.from(form.children).map((row, i) => {
     const name = row.querySelector('.config-name').value;
@@ -653,12 +539,7 @@ async function saveConfig() {
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ inputData, inputDataConfig: newConfig })
     });
-    const text = await res.text();
-    console.log('Save config response:', text);
-    if (!res.ok) {
-      const data = JSON.parse(text);
-      throw new Error(data.message || 'Failed to save configuration');
-    }
+    if (!res.ok) throw new Error((await res.json()).message || 'Failed to save configuration');
     closeConfigModal();
     await loadInputData();
     document.getElementById('progress').classList.add('hidden');
@@ -712,15 +593,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('add-column').addEventListener('click', addConfigColumn);
     document.getElementById('save-config').addEventListener('click', saveConfig);
     document.getElementById('cancel-config').addEventListener('click', closeConfigModal);
-
-    // Context menu handlers
-    document.addEventListener('insertRow', async (e) => {
-      const { rowIndex, config } = e.detail;
+    document.getElementById('insert-row').addEventListener('click', async () => {
+      const menu = document.getElementById('context-menu');
+      const rowIndex = parseInt(menu.dataset.rowIndex);
+      const config = await loadInputData();
       insertRow(rowIndex, config);
+      menu.classList.add('hidden');
     });
-    document.addEventListener('deleteRow', async (e) => {
-      const { rowIndex, config } = e.detail;
+    document.getElementById('delete-row').addEventListener('click', async () => {
+      const menu = document.getElementById('context-menu');
+      const rowIndex = parseInt(menu.dataset.rowIndex);
+      const config = await loadInputData();
       deleteRow(rowIndex, config);
+      menu.classList.add('hidden');
+    });
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#context-menu')) {
+        document.getElementById('context-menu').classList.add('hidden');
+      }
     });
 
     updateDateTime();
